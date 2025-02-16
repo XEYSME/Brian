@@ -1,3 +1,7 @@
+local MainColor = Color3.fromRGB(35, 35, 35);
+local BackgroundColor = Color3.fromRGB(20, 20, 20); -- Изменено
+local AccentColor = Color3.fromRGB(25, 0, 0);       -- Изменено
+
 local InputService = game:GetService('UserInputService');
 local TextService = game:GetService('TextService');
 local CoreGui = game:GetService('CoreGui');
@@ -30,9 +34,9 @@ local Library = {
     HudRegistry = {};
 
     FontColor = Color3.fromRGB(255, 255, 255);
-    MainColor = Color3.fromRGB(35, 35, 35);
-    BackgroundColor = Color3.fromRGB(20, 20, 20);
-    AccentColor = Color3.fromRGB(25, 0, 0);
+    MainColor = MainColor,
+    BackgroundColor = BackgroundColor, -- Изменено
+    AccentColor = AccentColor,         -- Изменено
     OutlineColor = Color3.fromRGB(45, 45, 45);
     RiskColor = Color3.fromRGB(255, 50, 50),
 
