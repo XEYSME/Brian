@@ -1,6 +1,6 @@
 local MainColor = Color3.fromRGB(35, 35, 35);
 local BackgroundColor = Color3.fromRGB(20, 20, 20); -- Изменено
-local AccentColor = Color3.fromRGB(25, 0, 0);       -- Изменено
+local AccentColor = Color3.fromRGB(69, 69, 69);       -- Изменено
 
 local InputService = game:GetService('UserInputService');
 local TextService = game:GetService('TextService');
