@@ -1,10 +1,5 @@
 local httpService = game:GetService('HttpService')
 
-local SupportedGames = {
-    ['Locked'] = {
-        12276235857, -- Main Lobby
-}
-
 function GetGame()
     for sgame, id in pairs(SupportedGames) do
         if table.find(id, game.PlaceId) then
