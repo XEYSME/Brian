@@ -3,9 +3,10 @@ local ThemeManager = {} do
 	ThemeManager.Folder = 'XEV-HUB'
 	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
 
+	
 	ThemeManager.Library = nil
 	ThemeManager.BuiltInThemes = {
-		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"0055ff","BackgroundColor":"141414","OutlineColor":"323232"}') },
+		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"454545","BackgroundColor":"141414","OutlineColor":"323232"}') },
 		['BBot'] 			= { 2, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1e1e1e","AccentColor":"7e48a3","BackgroundColor":"232323","OutlineColor":"141414"}') },
 		['Fatality']		= { 3, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1e1842","AccentColor":"c50754","BackgroundColor":"191335","OutlineColor":"3c355d"}') },
 		['Jester'] 			= { 4, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"db4467","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
@@ -97,6 +98,14 @@ local ThemeManager = {} do
 			self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_ThemeList.Value))
 		end)
 
+		groupbox:AddButton('Reset default', function()
+			if isfile(self.Folder .. '/themes/default.txt') then
+				delfile(self.Folder .. '/themes/default.txt')
+			end
+			self.Library:Notify('Reseted default theme')
+			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
+		end)
+
 		Options.ThemeManager_ThemeList:OnChanged(function()
 			self:ApplyTheme(Options.ThemeManager_ThemeList.Value)
 		end)
@@ -110,9 +119,27 @@ local ThemeManager = {} do
 			self:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
 
 			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
-			Options.ThemeManager_CustomThemeList:SetValue(nil)
 		end):AddButton('Load theme', function() 
 			self:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
+		end)
+
+		groupbox:AddButton('Delete theme', function()
+			local name = Options.ThemeManager_CustomThemeName.Value
+
+			if not name then
+				return self.Library:Notify('no theme file is selected')
+			end
+
+			local thm = self.Folder .. '/themes/' .. name .. '.json'
+
+			local success, err = delfile(thm)
+			if not success then
+				return self.Library:Notify('Failed to delete theme: ' .. err)
+			end
+
+			self.Library:Notify(string.format('Deleted theme %q', name))
+
+			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
 		end)
 
 		groupbox:AddButton('Refresh list', function()
@@ -125,6 +152,14 @@ local ThemeManager = {} do
 				self:SaveDefault(Options.ThemeManager_CustomThemeList.Value)
 				self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_CustomThemeList.Value))
 			end
+		end)
+
+		groupbox:AddButton('Reset default', function()
+			if isfile(self.Folder .. '/themes/default.txt') then
+				delfile(self.Folder .. '/themes/default.txt')
+			end
+			self.Library:Notify('Reseted default theme')
+			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
 		end)
 
 		ThemeManager:LoadDefault()
@@ -247,4 +282,5 @@ local ThemeManager = {} do
 	ThemeManager:BuildFolderTree()
 end
 
+getgenv().ThemeManager = ThemeManager
 return ThemeManager
