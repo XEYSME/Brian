@@ -1,73 +1,97 @@
 local httpService = game:GetService('HttpService')
 
+local SupportedGames = {
+    ['Locked'] = {
+        12276235857, -- Main Lobby
+}
+
+function GetGame()
+    for sgame, id in pairs(SupportedGames) do
+        if table.find(id, game.PlaceId) then
+            return sgame
+        end
+    end
+    return 'Universal | '..(tostring(game.PlaceId))
+end
+
+function GetXEVFolder()
+    for i, file in pairs(listfiles('')) do
+        if string.find(file, 'XEV-HUB') and isfolder(file) then
+            return file
+        end
+    end
+    return
+end
+
 local SaveManager = {} do
-    SaveManager.Folder = 'XEV-HUB'
-    SaveManager.Ignore = {}
-    SaveManager.Parser = {
-        Toggle = {
-            Save = function(idx, object) 
-                return { type = 'Toggle', idx = idx, value = object.Value } 
-            end,
-            Load = function(idx, data)
-                if Toggles[idx] then 
-                    Toggles[idx]:SetValue(data.value)
-                end
-            end,
-        },
-        Slider = {
-            Save = function(idx, object)
-                return { type = 'Slider', idx = idx, value = tostring(object.Value) }
-            end,
-            Load = function(idx, data)
-                if Options[idx] then 
-                    Options[idx]:SetValue(data.value)
-                end
-            end,
-        },
-        Dropdown = {
-            Save = function(idx, object)
-                return { type = 'Dropdown', idx = idx, value = object.Value, multi = object.Multi }
-            end,
-            Load = function(idx, data)
-                if Options[idx] then 
-                    Options[idx]:SetValue(data.value)
-                end
-            end,
-        },
-        ColorPicker = {
-            Save = function(idx, object)
-                return { type = 'ColorPicker', idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
-            end,
-            Load = function(idx, data)
-                if Options[idx] then 
-                    Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
-                end
-            end,
-        },
-        KeyPicker = {
-            Save = function(idx, object)
-                return { type = 'KeyPicker', idx = idx, mode = object.Mode, key = object.Value }
-            end,
-            Load = function(idx, data)
-                if Options[idx] then 
-                    Options[idx]:SetValue({ data.key, data.mode })
-                end
-            end,
-        },
-        Input = {
-            Save = function(idx, object)
-                return { type = 'Input', idx = idx, text = object.Value, Default = object.Default }
-            end,
-            Load = function(idx, data)
-                if Options[idx] and type(data.text) == 'string' then
-                    Options[idx]:SetValue(data.text)
-                    if data.Default then
-                        Options[idx].Default = data.Default
-                    end
-                end
-            end,
-        },
-    }
+	SaveManager.Folder = GetXEVFolder()..'/'..GetGame() or 'LinoriaLibSettings'
+	SaveManager.Ignore = {}
+	SaveManager.Default = {
+		objects = {}
+	}
+	SaveManager.Parser = {
+		Toggle = {
+			Save = function(idx, object) 
+				return { type = 'Toggle', idx = idx, value = object.Value } 
+			end,
+			Load = function(idx, data)
+				if Toggles[idx] then 
+					Toggles[idx]:SetValue(data.value)
+				end
+			end,
+		},
+		Slider = {
+			Save = function(idx, object)
+				return { type = 'Slider', idx = idx, value = tostring(object.Value) }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValue(data.value)
+				end
+			end,
+		},
+		Dropdown = {
+			Save = function(idx, object)
+				return { type = 'Dropdown', idx = idx, value = object.Value, mutli = object.Multi }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValue(data.value)
+				end
+			end,
+		},
+		ColorPicker = {
+			Save = function(idx, object)
+				return { type = 'ColorPicker', idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
+				end
+			end,
+		},
+		KeyPicker = {
+			Save = function(idx, object)
+				return { type = 'KeyPicker', idx = idx, mode = object.Mode, key = object.Value }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValue({ data.key, data.mode })
+				end
+			end,
+		},
+
+		Input = {
+			Save = function(idx, object)
+				return { type = 'Input', idx = idx, text = object.Value }
+			end,
+			Load = function(idx, data)
+				if Options[idx] and type(data.text) == 'string' then
+					Options[idx]:SetValue(data.text)
+				end
+			end,
+		},
+	}
 
 	function SaveManager:SetIgnoreIndexes(list)
 		for _, key in next, list do
