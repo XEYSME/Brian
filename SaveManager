@@ -1,18 +1,8 @@
-function GetXEVFolder()
-    for i, file in pairs(listfiles('')) do
-        if string.find(file, 'XEV-HUB') and isfolder(file) then
-            return file
-        end
-    end
-    return
-end
+local httpService = game:GetService('HttpService')
 
 local SaveManager = {} do
-	SaveManager.Folder = GetXEVFolder()..'/'..GetGame() or 'LinoriaLibSettings'
+	SaveManager.Folder = 'LinoriaLibSettings'
 	SaveManager.Ignore = {}
-	SaveManager.Default = {
-		objects = {}
-	}
 	SaveManager.Parser = {
 		Toggle = {
 			Save = function(idx, object) 
