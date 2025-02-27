@@ -1,14 +1,3 @@
-local httpService = game:GetService('HttpService')
-
-function GetGame()
-    for sgame, id in pairs(SupportedGames) do
-        if table.find(id, game.PlaceId) then
-            return sgame
-        end
-    end
-    return 'Universal | '..(tostring(game.PlaceId))
-end
-
 function GetXEVFolder()
     for i, file in pairs(listfiles('')) do
         if string.find(file, 'XEV-HUB') and isfolder(file) then
