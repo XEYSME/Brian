@@ -9,6 +9,22 @@ local RenderStepped = RunService.RenderStepped;
 local LocalPlayer = Players.LocalPlayer;
 local Mouse = LocalPlayer:GetMouse();
 
+function GetChat()
+    if LocalPlayer.PlayerGui:FindFirstChild('Chat') then
+        return LocalPlayer.PlayerGui:WaitForChild('Chat').Frame.ChatBarParentFrame.Frame.BoxFrame.Frame.ChatBar:IsFocused()
+    elseif CoreGui.ExperienceChat:FindFirstChild('appLayout') then
+        return CoreGui.ExperienceChat:WaitForChild('appLayout').chatInputBar.Background.Container.TextContainer.TextBoxContainer.TextBox:IsFocused()
+    else return
+    end
+end
+function IsTyping()
+    if (CoreGui.RobloxGui.SettingsClippingShield:WaitForChild('SettingsShield').Visible) or GetChat() then
+        return true
+    else
+        return false 
+    end
+end
+
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 
 local ScreenGui = Instance.new('ScreenGui');
@@ -32,7 +48,7 @@ local Library = {
     FontColor = Color3.fromRGB(255, 255, 255);
     MainColor = Color3.fromRGB(28, 28, 28);
     BackgroundColor = Color3.fromRGB(20, 20, 20);
-    AccentColor = Color3.fromRGB(26, 19, 52);
+    AccentColor = Color3.fromRGB(26, 20, 60);
     OutlineColor = Color3.fromRGB(50, 50, 50);
     RiskColor = Color3.fromRGB(255, 50, 50),
 
@@ -379,19 +395,27 @@ function Library:GiveSignal(Signal)
     table.insert(Library.Signals, Signal)
 end
 
-function Library:Unload()
+function Library:Unload()   
+    for _, option in next, SaveManager.Default.objects do
+        if SaveManager.Parser[option.type] then
+            task.spawn(function() SaveManager.Parser[option.type].Load(option.idx, option) end) -- task.spawn() so the config loading wont get stuck.
+        end
+    end
     -- Unload all of the signals
     for Idx = #Library.Signals, 1, -1 do
         local Connection = table.remove(Library.Signals, Idx)
         Connection:Disconnect()
     end
-
-     -- Call our unload callback, maybe to undo some hooks etc
+    -- Call our unload callback, maybe to undo some hooks etc
     if Library.OnUnload then
         Library.OnUnload()
     end
-
     ScreenGui:Destroy()
+    getgenv().Toggles = nil
+    getgenv().Options = nil
+    getgenv().Library = nil
+    getgenv().SaveManager = nil
+    getgenv().ThemeManager = nil
 end
 
 function Library:OnUnload(Callback)
@@ -416,6 +440,7 @@ do
         assert(Info.Default, 'AddColorPicker: Missing default value.');
 
         local ColorPicker = {
+            Default = Info.Default;
             Value = Info.Default;
             Transparency = Info.Transparency or 0;
             Type = 'ColorPicker';
@@ -1008,6 +1033,7 @@ do
         assert(Info.Default, 'AddKeyPicker: Missing default value.');
 
         local KeyPicker = {
+            Default = Info.Default;
             Value = Info.Default;
             Toggled = false;
             Mode = Info.Mode or 'Toggle'; -- Always, Toggle, Hold
@@ -1177,22 +1203,26 @@ do
         function KeyPicker:GetState()
             if KeyPicker.Mode == 'Always' then
                 return true;
-            elseif KeyPicker.Mode == 'Hold' then
-                if KeyPicker.Value == 'None' then
-                    return false;
-                end
+            elseif not IsTyping() then
+                if KeyPicker.Mode == 'Hold' then
+                    if KeyPicker.Value == 'None' then
+                        return false;
+                    end
 
-                local Key = KeyPicker.Value;
+                    local Key = KeyPicker.Value;
 
-                if Key == 'MB1' or Key == 'MB2' then
-                    return Key == 'MB1' and InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-                        or Key == 'MB2' and InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2);
+                    if Key == 'MB1' or Key == 'MB2' then
+                        return Key == 'MB1' and InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+                            or Key == 'MB2' and InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2);
+                    else
+                        return InputService:IsKeyDown(Enum.KeyCode[KeyPicker.Value]);
+                    end;
                 else
-                    return InputService:IsKeyDown(Enum.KeyCode[KeyPicker.Value]);
+                    return KeyPicker.Toggled;
                 end;
             else
-                return KeyPicker.Toggled;
-            end;
+                return false
+            end
         end;
 
         function KeyPicker:SetValue(Data)
@@ -1252,7 +1282,7 @@ do
                 wait(0.2);
 
                 local Event;
-                Event = InputService.InputBegan:Connect(function(Input)
+                Event = InputService.InputBegan:Connect(function(Input, Processed)
                     local Key;
 
                     if Input.UserInputType == Enum.UserInputType.Keyboard then
@@ -1281,8 +1311,8 @@ do
             end;
         end);
 
-        Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
-            if (not Picking) then
+        Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
+            if (not Picking) and (not IsTyping()) then
                 if KeyPicker.Mode == 'Toggle' then
                     local Key = KeyPicker.Value;
 
@@ -1314,8 +1344,8 @@ do
             end;
         end))
 
-        Library:GiveSignal(InputService.InputEnded:Connect(function(Input)
-            if (not Picking) then
+        Library:GiveSignal(InputService.InputEnded:Connect(function(Input, Processed)
+            if (not Picking) and (not IsTyping()) then
                 KeyPicker:Update();
             end;
         end))
@@ -1633,6 +1663,7 @@ do
         assert(Info.Text, 'AddInput: Missing `Text` string.')
 
         local Textbox = {
+            Default = Info.Default or '';
             Value = Info.Default or '';
             Numeric = Info.Numeric or false;
             Finished = Info.Finished or false;
@@ -1818,6 +1849,7 @@ do
         assert(Info.Text, 'AddInput: Missing `Text` string.')
 
         local Toggle = {
+            Default = Info.Default or false;
             Value = Info.Default or false;
             Type = 'Toggle';
 
@@ -1960,6 +1992,7 @@ do
         assert(Info.Rounding, 'AddSlider: Missing rounding value.');
 
         local Slider = {
+            Default = Info.Default;
             Value = Info.Default;
             Min = Info.Min;
             Max = Info.Max;
@@ -2165,6 +2198,7 @@ do
         end;
 
         local Dropdown = {
+            Default = Info.Default;
             Values = Info.Values;
             Value = Info.Multi and {};
             Multi = Info.Multi;
@@ -2590,6 +2624,7 @@ do
         Groupbox:AddBlank(Info.BlankSize or 5);
         Groupbox:Resize();
 
+        Dropdown['Default1'] = Dropdown.Value
         Options[Idx] = Dropdown;
 
         return Dropdown;
@@ -2842,6 +2877,7 @@ function Library:SetWatermark(Text)
 end;
 
 function Library:Notify(Text, Time)
+    if VevoStealth then return end
     local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
 
     YSize = YSize + 7
@@ -3521,44 +3557,46 @@ function Library:CreateWindow(...)
             -- A bit scuffed, but if we're going from not toggled -> toggled we want to show the frame immediately so that the fade is visible.
             Outer.Visible = true;
 
-            task.spawn(function()
-                -- TODO: add cursor fade?
-                local State = InputService.MouseIconEnabled;
+            if Drawing then
+                task.spawn(function()
+                    -- TODO: add cursor fade?
+                    local State = InputService.MouseIconEnabled;
 
-                local Cursor = Drawing.new('Triangle');
-                Cursor.Thickness = 1;
-                Cursor.Filled = true;
-                Cursor.Visible = true;
+                    local Cursor = Drawing.new('Triangle');
+                    Cursor.Thickness = 1;
+                    Cursor.Filled = true;
+                    Cursor.Visible = true;
 
-                local CursorOutline = Drawing.new('Triangle');
-                CursorOutline.Thickness = 1;
-                CursorOutline.Filled = false;
-                CursorOutline.Color = Color3.new(0, 0, 0);
-                CursorOutline.Visible = true;
+                    local CursorOutline = Drawing.new('Triangle');
+                    CursorOutline.Thickness = 1;
+                    CursorOutline.Filled = false;
+                    CursorOutline.Color = Color3.new(0, 0, 0);
+                    CursorOutline.Visible = true;
 
-                while Toggled and ScreenGui.Parent do
-                    InputService.MouseIconEnabled = false;
+                    while Toggled and ScreenGui.Parent do
+                        InputService.MouseIconEnabled = false;
 
-                    local mPos = InputService:GetMouseLocation();
+                        local mPos = InputService:GetMouseLocation();
 
-                    Cursor.Color = Library.AccentColor;
+                        Cursor.Color = Library.AccentColor;
 
-                    Cursor.PointA = Vector2.new(mPos.X, mPos.Y);
-                    Cursor.PointB = Vector2.new(mPos.X + 16, mPos.Y + 6);
-                    Cursor.PointC = Vector2.new(mPos.X + 6, mPos.Y + 16);
+                        Cursor.PointA = Vector2.new(mPos.X, mPos.Y);
+                        Cursor.PointB = Vector2.new(mPos.X + 16, mPos.Y + 6);
+                        Cursor.PointC = Vector2.new(mPos.X + 6, mPos.Y + 16);
 
-                    CursorOutline.PointA = Cursor.PointA;
-                    CursorOutline.PointB = Cursor.PointB;
-                    CursorOutline.PointC = Cursor.PointC;
+                        CursorOutline.PointA = Cursor.PointA;
+                        CursorOutline.PointB = Cursor.PointB;
+                        CursorOutline.PointC = Cursor.PointC;
 
-                    RenderStepped:Wait();
-                end;
+                        RenderStepped:Wait();
+                    end;
 
-                InputService.MouseIconEnabled = State;
+                    InputService.MouseIconEnabled = State;
 
-                Cursor:Remove();
-                CursorOutline:Remove();
-            end);
+                    Cursor:Remove();
+                    CursorOutline:Remove();
+                end);
+            end;
         end;
 
         for _, Desc in next, Outer:GetDescendants() do
