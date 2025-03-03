@@ -198,7 +198,7 @@ local SaveManager = {} do
 
     function SaveManager:LoadAutoloadConfig()
     if isfile(self.Folder .. '/settings/autoload.txt') then
-        task.wait(1.8)
+        task.wait(1)
 
         local name = readfile(self.Folder .. '/settings/autoload.txt')
 
